@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from 'react'
 import {Container, PostForm} from '../components'
-import appwriteService from '../../appwrite/servicesConfig'
+import service from '../services/posts' // UPDATED IMPORT
 import { useNavigate, useParams } from 'react-router-dom'
 
 export default function EditPost(){
@@ -10,20 +10,20 @@ export default function EditPost(){
 
     useEffect(()=>{
         if(slug) {
-            appwriteService.getPost(slug).then((post) => {
+            service.getPost(slug).then((post) => {
                 if(post){
                     setPost(post)
                 }
-            }). catch((error) => {
-                console.log("Appwrite service :: getPost :: error", error)
+            }).catch((error) => {
+                // console.log("Service :: getPost :: error", error)
                 navigate('/')
             })
-        }else{
+        } else {
             navigate('/')
         }
     }, [slug, navigate])
 
-    return post? (
+    return post ? (
         <div className='py-8'>
             <Container>
                 <PostForm post={post} />
