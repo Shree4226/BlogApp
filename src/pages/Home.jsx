@@ -1,35 +1,37 @@
 import React, { useEffect, useState } from "react";
-import appwriteService from '../../appwrite/servicesConfig'
+import service from '../services/posts' // UPDATED IMPORT
 import { Container, PostCard } from "../components";
 import { useSelector } from "react-redux";
 
-
-function Home(){
+function Home() {
     const [posts, setPosts] = useState([])
     const status = useSelector((state) => state.auth.status)
 
     useEffect(() => {
-        appwriteService.getPosts([]).then((posts) => {
-            if(posts){
-                setPosts(posts.documents)
+        service.getPosts().then((posts) => {
+            if (posts) {
+                // UPDATED: MERN backend returns the array directly, so we don't need .documents
+                setPosts(posts)
             }
         })
     }, [])
-
-    if(posts.length === 0){
+    
+    // Helper to check if we should show the "No posts" message
+    if (posts.length === 0) {
         return (
             <div className="w-full py-8 mt-4 text-center">
                 <Container>
                     <div className="flex flex-wrap">
                         <div className="p-2 w-full">
-                            {status && posts.length === 0 ? (
+                            {status ? (
                                 <h1 className="text-2xl font-bold hover:text-gray-500">
                                     No posts available. Please create a post.
                                 </h1>
-                            ) :
-                            <h1 className="text-2xl font-bold hover:text-gray-500">
-                                Login to see posts.
-                            </h1> }
+                            ) : (
+                                <h1 className="text-2xl font-bold hover:text-gray-500">
+                                    Login to see posts.
+                                </h1>
+                            )}
                         </div>
                     </div>
                 </Container>
@@ -42,7 +44,8 @@ function Home(){
             <Container>
                 <div className="flex flex-wrap">
                     {posts.map((post) => (
-                        <div key={post.$id} className="p-2 w-1/4">
+                        // UPDATED: MongoDB uses _id
+                        <div key={post._id} className="p-2 w-1/4">
                             <PostCard {...post} />
                         </div>
                     ))}
