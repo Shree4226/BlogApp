@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import appwriteService from "../../appwrite/servicesConfig";
+import service from "../../services/posts"; // UPDATED IMPORT
 import { Button, Container } from "../components";
 import parse from "html-react-parser";
 import { useSelector } from "react-redux";
@@ -11,11 +11,15 @@ export default function Post() {
     const navigate = useNavigate();
 
     const userData = useSelector((state) => state.auth.userData);
-    const isAuthor = post && userData ? post.userId === userData.userData.$id : false;
+
+    // UPDATED: Check ownership. 
+    // MongoDB IDs are strings in JSON, but ensure userData has _id (from the authSlice update).
+    // We fallback to $id if you are still using the old Redux structure, but _id is preferred.
+    const isAuthor = post && userData ? post.userId === (userData._id || userData.$id) : false;
 
     useEffect(() => {
         if (slug) {
-            appwriteService.getPost(slug).then((post) => {
+            service.getPost(slug).then((post) => {
                 if (post) setPost(post);
                 else navigate("/");
             });
@@ -23,9 +27,10 @@ export default function Post() {
     }, [slug, navigate]);
 
     const deletePost = () => {
-        appwriteService.deletePost(post.$id).then((status) => {
+        // UPDATED: Use slug for deletion as per Backend Routes
+        service.deletePost(post.slug).then((status) => {
             if (status) {
-                appwriteService.deleteFile(post.featuredImage);
+                // Note: File deletion is now handled by backend (or ignored for this demo)
                 navigate("/");
             }
         });
@@ -35,15 +40,17 @@ export default function Post() {
         <div className="py-8">
             <Container>
                 <div className="w-full flex justify-center mb-4 relative border rounded-xl p-2">
+                    {/* UPDATED: Handle image source. If featuredImage is a full URL, use it directly. */}
                     <img
-                        src={appwriteService.getFilePreview(post.featuredImage)}
+                        src={post.featuredImage.startsWith('http') ? post.featuredImage : service.getFilePreview(post.featuredImage)}
                         alt={post.title}
                         className="rounded-xl"
                     />
 
                     {isAuthor && (
                         <div className="absolute right-6 top-6">
-                            <Link to={`/edit-post/${post.$id}`}>
+                            {/* UPDATED: Link to edit uses slug */}
+                            <Link to={`/edit-post/${post.slug}`}>
                                 <Button bgColor="bg-green-500" className="mr-3">
                                     Edit
                                 </Button>
@@ -59,7 +66,7 @@ export default function Post() {
                 </div>
                 <div className="browser-css">
                     {parse(post.content)}
-                    </div>
+                </div>
             </Container>
         </div>
     ) : null;
